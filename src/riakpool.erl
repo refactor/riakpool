@@ -58,7 +58,12 @@ execute(Fun) ->
         {ok, Pid} ->
             try {ok, Fun(Pid)}
             catch _:E -> {error, E}
-            after gen_server:cast(?MODULE, {check_in, Pid}) end;
+            after
+                StillAlive = is_process_alive(Pid),
+                if (StillAlive) ->
+                    gen_server:cast(?MODULE, {check_in, Pid})
+                end
+            end;
         {error, E} -> {error, E}
     end.
 
@@ -110,6 +115,7 @@ handle_call(_Request, _From, State) -> {reply, ok, State}.
 
 %% @hidden
 handle_cast({check_in, Pid}, State=#state{pids=Pids}) ->
+    lager:debug("check-in: ~p, is alive: ~p", [Pid, is_process_alive(Pid)]),
     NewPids = queue:in(Pid, Pids),
     {noreply, State#state{pids=NewPids}};
 handle_cast(stop, State) -> {stop, normal, State};
