@@ -1,4 +1,8 @@
 ebin
 doc
 deps
+log/
 .eunit
+*.swp
+*.swo
+tags
